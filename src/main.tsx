@@ -86,6 +86,11 @@ async function getSubredditThemeColor(context: Devvit.Context, subredditName: st
   return subredditStyles.primaryColor || null;
 }
 
+function getDigitedString(string: String){
+  const result = string.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+  return result;
+}
+
 Devvit.addCustomPostType({
   name: 'Subreddit Info',
   render: (context) => {
@@ -93,6 +98,7 @@ Devvit.addCustomPostType({
     const [subreddit, setSubreddit] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [themeColor, setThemeColor] = useState('');
+    const [liveUsers, setLiveUsers] = useState(-1);
     const {
       data: username,
       loading: usernameLoading,
@@ -118,6 +124,7 @@ Devvit.addCustomPostType({
         setSubreddit(String(formValues.subreddit));
         const subscribers = await context.reddit.getSubredditInfoByName(String(formValues.subreddit));
         setSubscribers(String(subscribers.subscribersCount));
+        setLiveUsers(subscribers.activeCount!);
         setIsLoading(false);
         const themeColor = await getSubredditThemeColor(context, String(formValues.subreddit));
         setThemeColor(themeColor!);
@@ -130,13 +137,15 @@ Devvit.addCustomPostType({
     return (
       <zstack height="100%" width="100%" alignment="middle center">
         <vstack gap="medium" padding="small" alignment="middle center">
+          <image url="https://www.redditstatic.com/devvit-dev-portal/assets/landing-page/flyingSnoo.png" imageWidth="100px" imageHeight="100px"></image>
           <button icon="search-fill" onPress={() => context.ui.showForm(subredditForm)}>
             Find What To Invest
           </button>
           {subreddit !== '' && <text size="xlarge" weight="bold" color={themeColor}>r/{subreddit}</text>}
           {subscribers ? (
-            <text>Subscribers: {subscribers}</text>
-          ) : <text>Enter the subreddit name first.</text>}
+            <hstack gap="medium"><hstack gap="small"><icon name="users-fill" color="#2F54D2"></icon><text weight="bold" color="#2F54D2">MEMBERS</text></hstack><text weight="bold">{getDigitedString(String(subscribers))}</text></hstack>
+          ) : <text>Discover and choose which subreddit to invest.</text>}
+          {liveUsers >= 0 && <hstack gap="medium"><hstack gap="small"><icon name="live-fill" color="green"></icon><text weight="bold" color="green">LIVE</text></hstack><text weight="bold">{getDigitedString(String(liveUsers))}</text></hstack>}
           {isLoading && <icon name="load"></icon>}
         </vstack>
         <hstack height="100%" width="100%" alignment="top end" padding="small">
